@@ -48,15 +48,25 @@ latest official code + your features.
    ```
    UPDATER_GITHUB_OWNER=youruser
    UPDATER_GITHUB_REPO=NuvioTV
+
+   # Official Nuvio cloud API - enables account sync, profiles, QR login.
+   # Public endpoint + publishable key from the published API docs v1.1.
+   # Note the NUVIO_ prefix; the SUPABASE_* names in local.example.properties
+   # are outdated.
+   NUVIO_SUPABASE_URL=https://api.nuvio.tv
+   NUVIO_SUPABASE_ANON_KEY=sb_publishable_1Clq8rlTVACkdcZuqr6_AD__xUUC_EN
    ```
-4. Optional but recommended for CI releases — add the signing secrets used by
+   The CI copy must **not** contain `sdk.dir` (the release workflow runs on
+   Linux).
+4. Required for CI releases — add the signing secrets used by
    `.github/workflows/beta-release.yml` to your fork:
    `NUVIO_RELEASE_KEYSTORE_BASE64`, `NUVIO_RELEASE_KEY_ALIAS`,
    `NUVIO_RELEASE_KEY_PASSWORD`, `NUVIO_RELEASE_STORE_PASSWORD`, and
-   `LOCAL_PROPERTIES_BASE64` (base64 of your `local.properties`).
+   `LOCAL_PROPERTIES_BASE64` (base64 of the CI properties above).
    **Always sign with the same keystore**, otherwise devices can't upgrade in
-   place. Without secrets the workflow falls back to debug signing, which
-   also works as long as it's consistent.
+   place. Don't rely on the debug-signing fallback for releases: CI runners
+   generate a fresh debug key per run, so consecutive releases would refuse
+   to install over each other.
 
 ## Staying up to date with the official app
 
