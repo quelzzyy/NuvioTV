@@ -53,6 +53,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AspectRatio
+import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ClosedCaption
@@ -961,6 +962,7 @@ fun PlayerScreen(
                 onShowAudioDialog = { viewModel.onEvent(PlayerEvent.OnShowAudioOverlay) },
                 onShowSubtitleDialog = { viewModel.onEvent(PlayerEvent.OnShowSubtitleOverlay) },
                 onShowSpeedDialog = { viewModel.onEvent(PlayerEvent.OnShowSpeedDialog) },
+                onShowSleepTimerDialog = { viewModel.onEvent(PlayerEvent.OnShowSleepTimerDialog) },
                 onToggleAspectRatio = {
                     Log.d("PlayerScreen", "onToggleAspectRatio called - dispatching event")
                     viewModel.onEvent(PlayerEvent.OnToggleAspectRatio)
@@ -1296,6 +1298,15 @@ fun PlayerScreen(
                 onDismiss = { viewModel.onEvent(PlayerEvent.OnDismissTransientOverlay) }
             )
         }
+
+        if (uiState.showSleepTimerDialog) {
+            SleepTimerDialog(
+                endAtMs = uiState.sleepTimerEndAtMs,
+                onSelectMinutes = { viewModel.onEvent(PlayerEvent.OnSetSleepTimer(it)) },
+                onCancelTimer = { viewModel.onEvent(PlayerEvent.OnCancelSleepTimer) },
+                onDismiss = { viewModel.onEvent(PlayerEvent.OnDismissSleepTimerDialog) }
+            )
+        }
     }
 }
 
@@ -1599,6 +1610,7 @@ private fun PlayerControlsOverlay(
     onShowAudioDialog: () -> Unit,
     onShowSubtitleDialog: () -> Unit,
     onShowSpeedDialog: () -> Unit,
+    onShowSleepTimerDialog: () -> Unit,
     onToggleAspectRatio: () -> Unit,
     onSwitchPlayerEngine: () -> Unit,
     onReportPlaybackIssue: () -> Unit,
@@ -1898,6 +1910,16 @@ private fun PlayerControlsOverlay(
                                     onShowStreamInfo()
                                 },
                                 focusRequester = streamInfoFocusRequester,
+                                upFocusRequester = progressBarFocusRequester,
+                                onDownKey = onHideControls,
+                                onFocused = onResetHideTimer
+                            )
+                            ControlButton(
+                                icon = Icons.Default.Bedtime,
+                                contentDescription = stringResource(R.string.cd_sleep_timer),
+                                onClick = {
+                                    onShowSleepTimerDialog()
+                                },
                                 upFocusRequester = progressBarFocusRequester,
                                 onDownKey = onHideControls,
                                 onFocused = onResetHideTimer
@@ -2803,6 +2825,111 @@ private fun SpeedSelectionDialog(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SleepTimerDialog(
+    endAtMs: Long?,
+    onSelectMinutes: (Int) -> Unit,
+    onCancelTimer: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val optionFocusRequesters = remember {
+        SLEEP_TIMER_OPTIONS_MINUTES.map { FocusRequester() }
+    }
+
+    LaunchedEffect(Unit) {
+        runCatching { optionFocusRequesters[0].requestFocus() }
+    }
+
+    var remainingMs by remember(endAtMs) {
+        mutableStateOf(endAtMs?.let { it - System.currentTimeMillis() })
+    }
+    LaunchedEffect(endAtMs) {
+        if (endAtMs == null) return@LaunchedEffect
+        while (true) {
+            remainingMs = endAtMs - System.currentTimeMillis()
+            delay(1000)
+        }
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .width(300.dp)
+                .clip(RoundedCornerShape(NuvioTheme.radii.xl))
+                .background(NuvioTheme.colors.BackgroundElevated)
+        ) {
+            Column(
+                modifier = Modifier.padding(NuvioTheme.spacing.xl)
+            ) {
+                Text(
+                    text = stringResource(R.string.player_sleep_timer_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = NuvioTheme.colors.TextPrimary,
+                    modifier = Modifier.padding(bottom = NuvioTheme.spacing.lg)
+                )
+
+                remainingMs?.takeIf { it > 0 }?.let { ms ->
+                    Text(
+                        text = stringResource(R.string.sleep_timer_remaining, formatTime(ms)),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = NuvioTheme.colors.TextSecondary,
+                        modifier = Modifier.padding(bottom = NuvioTheme.spacing.lg)
+                    )
+                }
+
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.sm),
+                    contentPadding = PaddingValues(top = NuvioTheme.spacing.xs)
+                ) {
+                    if (endAtMs != null) {
+                        item {
+                            SleepTimerItem(
+                                text = stringResource(R.string.sleep_timer_cancel),
+                                onClick = onCancelTimer
+                            )
+                        }
+                    }
+                    itemsIndexed(SLEEP_TIMER_OPTIONS_MINUTES) { index, minutes ->
+                        SleepTimerItem(
+                            modifier = Modifier.focusRequester(optionFocusRequesters[index]),
+                            text = stringResource(R.string.sleep_timer_minutes, minutes),
+                            onClick = { onSelectMinutes(minutes) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SleepTimerItem(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    Card(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .onFocusChanged { isFocused = it.isFocused },
+        colors = CardDefaults.colors(
+            containerColor = NuvioTheme.colors.BackgroundCard,
+            focusedContainerColor = NuvioTheme.colors.FocusBackground
+        ),
+        shape = CardDefaults.shape(shape = RoundedCornerShape(NuvioTheme.radii.sm))
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = NuvioTheme.colors.TextPrimary,
+            modifier = Modifier.padding(horizontal = NuvioTheme.spacing.lg, vertical = 14.dp)
+        )
     }
 }
 

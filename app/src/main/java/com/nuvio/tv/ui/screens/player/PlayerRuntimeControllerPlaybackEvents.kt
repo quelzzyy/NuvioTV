@@ -906,7 +906,7 @@ internal fun PlayerRuntimeController.schedulePauseOverlay() {
         val anyPanelOpen = s.showSubtitleOverlay || s.showSubtitleStylePanel ||
             s.showSpeedDialog || s.showMoreDialog || s.showEpisodesPanel ||
             s.showSourcesPanel || s.showAudioOverlay || s.showStreamInfoOverlay ||
-            s.showSubtitleTimingDialog
+            s.showSubtitleTimingDialog || s.showSleepTimerDialog
         if (!s.isPlaying && s.pauseOverlayEnabled && s.error == null && !anyPanelOpen) {
             _uiState.update { it.copy(showPauseOverlay = true, showControls = false) }
         }
@@ -1289,6 +1289,26 @@ fun PlayerRuntimeController.onEvent(event: PlayerEvent) {
                     showControls = true
                 )
             }
+        }
+        PlayerEvent.OnShowSleepTimerDialog -> {
+            _uiState.update {
+                it.copy(
+                    showSleepTimerDialog = true,
+                    showControls = true
+                )
+            }
+        }
+        PlayerEvent.OnDismissSleepTimerDialog -> {
+            _uiState.update { it.copy(showSleepTimerDialog = false) }
+            scheduleHideControls()
+        }
+        is PlayerEvent.OnSetSleepTimer -> {
+            startSleepTimer(event.minutes)
+            scheduleHideControls()
+        }
+        PlayerEvent.OnCancelSleepTimer -> {
+            cancelSleepTimer()
+            scheduleHideControls()
         }
         PlayerEvent.OnShowMoreDialog -> {
             _uiState.update {

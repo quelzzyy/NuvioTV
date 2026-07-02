@@ -114,6 +114,9 @@ data class PlayerUiState(
     val subtitleAutoSyncLoadedTrackKey: String? = null,
     val showSpeedDialog: Boolean = false,
     val showMoreDialog: Boolean = false,
+    // Sleep timer
+    val showSleepTimerDialog: Boolean = false,
+    val sleepTimerEndAtMs: Long? = null,
     // Subtitle style settings
     val subtitleStyle: SubtitleStyleSettings = SubtitleStyleSettings(),
     // Addon subtitles
@@ -289,6 +292,10 @@ sealed class PlayerEvent {
     data object OnHideSubtitleDelayOverlay : PlayerEvent()
     data class OnAdjustSubtitleDelay(val deltaMs: Int, val showOverlay: Boolean = true) : PlayerEvent()
     data object OnShowSpeedDialog : PlayerEvent()
+    data object OnShowSleepTimerDialog : PlayerEvent()
+    data object OnDismissSleepTimerDialog : PlayerEvent()
+    data class OnSetSleepTimer(val minutes: Int) : PlayerEvent()
+    data object OnCancelSleepTimer : PlayerEvent()
     data object OnShowMoreDialog : PlayerEvent()
     data object OnDismissMoreDialog : PlayerEvent()
     data object OnShowEpisodesPanel : PlayerEvent()
@@ -351,6 +358,8 @@ enum class FrameRateSource {
 }
 
 val PLAYBACK_SPEEDS = listOf(0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
+
+val SLEEP_TIMER_OPTIONS_MINUTES = listOf(15, 30, 45, 60, 90, 120)
 
 data class StreamInfoData(
     // Stream source

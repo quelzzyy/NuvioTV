@@ -1475,6 +1475,12 @@
     <string name="player_more_speed">Playback Speed</string>
     <string name="player_more_aspect_ratio">Aspect Ratio</string>
     <string name="player_more_open_external">Open in External Player</string>
+    <string name="hero_random_episode">Play random episode</string>
+    <string name="player_sleep_timer_title">Sleep Timer</string>
+    <string name="cd_sleep_timer">Sleep timer</string>
+    <string name="sleep_timer_minutes">%1$d minutes</string>
+    <string name="sleep_timer_remaining">Playback pauses in %1$s</string>
+    <string name="sleep_timer_cancel">Cancel timer</string>
     <string name="player_error_no_stream_url">No stream URL provided</string>
 
 
