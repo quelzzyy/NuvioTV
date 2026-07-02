@@ -397,6 +397,19 @@ fun HomeScreen(
             }
         }
 
+        // Source filter tabs (streaming-service style) over the modern home layout
+        if (homeStableGateReleased &&
+            uiState.homeLayout == HomeLayout.MODERN &&
+            uiState.homeSourceTabs.size > 1
+        ) {
+            HomeSourceTabBar(
+                tabs = uiState.homeSourceTabs,
+                selectedAddonId = uiState.selectedHomeSourceAddonId,
+                onSelect = { addonId -> viewModel.onEvent(HomeEvent.OnSourceTabSelected(addonId)) },
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
+        }
+
         val startupAuthNotice = uiState.startupAuthNotice
         if (startupAuthNotice != null) {
             Box(

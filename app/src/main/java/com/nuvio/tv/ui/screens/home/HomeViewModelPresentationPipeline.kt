@@ -238,13 +238,49 @@ internal fun HomeViewModel.observeLayoutPreferencesPipeline() {
     }
 }
 
+internal fun HomeViewModel.homeRowsFilteredBySource(
+    rows: List<HomeRow>,
+    selected: String?
+): List<HomeRow> {
+    if (selected == null) return rows
+    if (sourceFilterKeyHomeRows === rows && sourceFilterKeyHomeSelected == selected) {
+        return sourceFilterResultHomeRows
+    }
+    val filtered = rows.filter { row ->
+        when (row) {
+            is HomeRow.Catalog -> row.row.addonId == selected
+            is HomeRow.PlaceholderCatalog -> row.addonId == selected
+            is HomeRow.CollectionRow -> false
+        }
+    }
+    sourceFilterKeyHomeRows = rows
+    sourceFilterKeyHomeSelected = selected
+    sourceFilterResultHomeRows = filtered
+    return filtered
+}
+
+internal fun HomeViewModel.catalogRowsFilteredBySource(
+    rows: List<com.nuvio.tv.domain.model.CatalogRow>,
+    selected: String?
+): List<com.nuvio.tv.domain.model.CatalogRow> {
+    if (selected == null) return rows
+    if (sourceFilterKeyCatalogRows === rows && sourceFilterKeyCatalogSelected == selected) {
+        return sourceFilterResultCatalogRows
+    }
+    val filtered = rows.filter { it.addonId == selected }
+    sourceFilterKeyCatalogRows = rows
+    sourceFilterKeyCatalogSelected = selected
+    sourceFilterResultCatalogRows = filtered
+    return filtered
+}
+
 @OptIn(FlowPreview::class)
 internal fun HomeViewModel.observeModernHomePresentationPipeline() {
     viewModelScope.launch {
         combine(uiState, _currentLocaleTag) { state, localeTag ->
                 ModernHomePresentationInput(
-                    homeRows = state.homeRows,
-                    catalogRows = state.catalogRows,
+                    homeRows = homeRowsFilteredBySource(state.homeRows, state.selectedHomeSourceAddonId),
+                    catalogRows = catalogRowsFilteredBySource(state.catalogRows, state.selectedHomeSourceAddonId),
                     continueWatchingItems = state.continueWatchingItems,
                     useLandscapePosters = state.modernLandscapePostersEnabled,
                     showCatalogTypeSuffix = state.catalogTypeSuffixEnabled,

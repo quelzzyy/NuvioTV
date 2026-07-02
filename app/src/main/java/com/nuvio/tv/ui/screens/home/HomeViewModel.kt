@@ -188,6 +188,14 @@ class HomeViewModel @Inject constructor(
     internal var currentMdbListSettings: MDBListSettings = MDBListSettings()
     internal var heroEnrichmentJob: Job? = null
     internal var lastHeroEnrichmentSignature: String? = null
+    // Memoized source-tab filtering (keeps === identity stable for the
+    // presentation pipeline's distinctUntilChanged when nothing changed).
+    internal var sourceFilterKeyHomeRows: List<HomeRow>? = null
+    internal var sourceFilterKeyHomeSelected: String? = null
+    internal var sourceFilterResultHomeRows: List<HomeRow> = emptyList()
+    internal var sourceFilterKeyCatalogRows: List<CatalogRow>? = null
+    internal var sourceFilterKeyCatalogSelected: String? = null
+    internal var sourceFilterResultCatalogRows: List<CatalogRow> = emptyList()
     internal var lastHeroEnrichedItems: List<MetaPreview> = emptyList()
     internal var heroItemOrder: List<String> = emptyList()
     internal val modernCarouselRowBuildCache = ModernCarouselRowBuildCache()
@@ -558,6 +566,13 @@ class HomeViewModel @Inject constructor(
                 isNextUp = event.isNextUp
             )
             HomeEvent.OnRetry -> viewModelScope.launch { loadAllCatalogs(addonsCache, forceReload = true) }
+            is HomeEvent.OnSourceTabSelected -> {
+                val changed = _uiState.value.selectedHomeSourceAddonId != event.addonId
+                if (changed) {
+                    _uiState.update { it.copy(selectedHomeSourceAddonId = event.addonId) }
+                    _scrollToTopTrigger.value++
+                }
+            }
         }
     }
 

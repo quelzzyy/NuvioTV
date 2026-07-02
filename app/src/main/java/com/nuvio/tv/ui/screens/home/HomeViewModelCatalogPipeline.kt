@@ -841,12 +841,25 @@ internal suspend fun HomeViewModel.updateCatalogRowsPipeline() {
     // catalogs loaded after the initial startup race set an error).
     val hasContent = computedHomeRows.isNotEmpty() || baseHeroItems.isNotEmpty() || displayRows.isNotEmpty()
 
+    val sourceTabs = computedHomeRows
+        .mapNotNull { row ->
+            when (row) {
+                is HomeRow.Catalog -> HomeSourceTab(row.row.addonId, row.row.addonName)
+                is HomeRow.PlaceholderCatalog -> HomeSourceTab(row.addonId, row.addonName)
+                is HomeRow.CollectionRow -> null
+            }
+        }
+        .distinctBy { it.addonId }
+
     _uiState.update { state ->
         state.copy(
             catalogRows = if (state.catalogRows == displayRows) state.catalogRows else displayRows,
             heroItems = if (state.heroItems == baseHeroItems) state.heroItems else baseHeroItems,
             gridItems = if (state.gridItems == nextGridItems) state.gridItems else nextGridItems,
             homeRows = if (state.homeRows == computedHomeRows) state.homeRows else computedHomeRows,
+            homeSourceTabs = if (state.homeSourceTabs == sourceTabs) state.homeSourceTabs else sourceTabs,
+            selectedHomeSourceAddonId = state.selectedHomeSourceAddonId
+                ?.takeIf { selected -> sourceTabs.any { it.addonId == selected } },
             isLoading = false,
             error = if (hasContent) null else state.error
         )
