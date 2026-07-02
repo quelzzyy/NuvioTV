@@ -1,0 +1,53 @@
+# Fork-only workflow: keeps this fork's feature branch up to date with the
+# official tapframe/NuvioTV repo by merging upstream/main on a schedule.
+# Does nothing when running in the upstream repo itself.
+name: Sync Upstream
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # every Monday 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: "Upstream ref to merge"
+        required: false
+        default: "main"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.repository_owner != 'tapframe'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: my-features
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge upstream
+        id: merge
+        run: |
+          git remote add upstream https://github.com/tapframe/NuvioTV.git
+          git fetch upstream --tags
+          REF="${{ inputs.upstream_ref || 'main' }}"
+          BEHIND=$(git rev-list --count "HEAD..upstream/$REF")
+          echo "behind=$BEHIND" >> "$GITHUB_OUTPUT"
+          if [ "$BEHIND" = "0" ]; then
+            echo "Already up to date with upstream/$REF."
+            exit 0
+          fi
+          if git merge "upstream/$REF" --no-edit; then
+            git push origin my-features
+            echo "Merged $BEHIND upstream commit(s) and pushed."
+          else
+            echo "::error::Merge conflict with upstream/$REF — sync manually (scripts/sync-upstream.ps1) and push."
+            exit 1
+          fi

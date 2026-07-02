@@ -129,9 +129,10 @@ android {
         buildConfigField("String", "PREMIUMIZE_CLIENT_ID", "\"${localProperties.getProperty("PREMIUMIZE_CLIENT_ID", "")}\"")
         buildConfigField("String", "SPONSOR_NAMES", buildConfigString(sponsorNames))
 
-        // In-app updater (GitHub Releases)
-        buildConfigField("String", "GITHUB_OWNER", "\"tapframe\"")
-        buildConfigField("String", "GITHUB_REPO", "\"NuvioTV\"")
+        // In-app updater (GitHub Releases). Override UPDATER_GITHUB_OWNER/REPO in
+        // local.properties to point the updater at a fork's releases.
+        buildConfigField("String", "GITHUB_OWNER", "\"${resolveProperty(devProperties, localProperties, "UPDATER_GITHUB_OWNER", "tapframe")}\"")
+        buildConfigField("String", "GITHUB_REPO", "\"${resolveProperty(devProperties, localProperties, "UPDATER_GITHUB_REPO", "NuvioTV")}\"")
     }
 
     flavorDimensions += "distribution"
