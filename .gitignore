@@ -42,6 +42,7 @@ backups/
 scripts/*
 !scripts/release_beta.py
 !scripts/sync-upstream.ps1
+!scripts/push-my-changes.ps1
 /supabase
 tv-samples
 HOME_UI_OPTIMIZATION_NOTES.local.md
