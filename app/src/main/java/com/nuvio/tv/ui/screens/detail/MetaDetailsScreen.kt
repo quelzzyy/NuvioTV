@@ -1411,6 +1411,24 @@ private fun MetaDetailsContent(
             onEpisodeClick(video)
         }
     }
+    // Random episode ("Surprise Me"): pick any aired episode across all seasons.
+    val randomEpisodeCandidates = remember(meta.videos) {
+        val today = java.time.LocalDate.now()
+        meta.videos.filter { video ->
+            video.season != null && video.season != 0 && video.episode != null &&
+                (video.released?.substringBefore('T')?.let { date ->
+                    runCatching { !java.time.LocalDate.parse(date).isAfter(today) }.getOrDefault(true)
+                } ?: true)
+        }
+    }
+    val randomEpisodeClick: () -> Unit = remember(randomEpisodeCandidates, onEpisodeClick) {
+        {
+            randomEpisodeCandidates.randomOrNull()?.let { video ->
+                markHeroRestore()
+                onEpisodeClick(video)
+            }
+        }
+    }
     val episodeManualClick = remember(onEpisodeManualPlayClick) {
         { video: Video ->
             markEpisodeRestore(video.id)
@@ -1640,6 +1658,7 @@ private fun MetaDetailsContent(
                         showFullReleaseDate = showFullReleaseDate,
                         trailerAvailable = trailerButtonEnabled && !trailerUrl.isNullOrBlank(),
                         onTrailerClick = onTrailerButtonClick,
+                        onRandomEpisodeClick = randomEpisodeClick.takeIf { randomEpisodeCandidates.size > 1 },
                         hideLogoDuringTrailer = hideLogoDuringTrailer,
                         isTrailerPlaying = isTrailerPlaying,
                         playButtonFocusRequester = heroPlayFocusRequester,
