@@ -1476,7 +1476,6 @@
     <string name="player_more_aspect_ratio">Aspect Ratio</string>
     <string name="player_more_open_external">Open in External Player</string>
     <string name="hero_random_episode">Play random episode</string>
-    <string name="home_source_tab_all">All</string>
     <string name="player_sleep_timer_title">Sleep Timer</string>
     <string name="cd_sleep_timer">Sleep timer</string>
     <string name="sleep_timer_minutes">%1$d minutes</string>

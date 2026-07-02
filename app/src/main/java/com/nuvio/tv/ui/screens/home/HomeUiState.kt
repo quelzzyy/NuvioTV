@@ -58,16 +58,7 @@ data class HomeUiState(
     val useEpisodeThumbnailsInCw: Boolean = true,
     val heroEnrichmentEnabled: Boolean = false,
     val startupAuthNotice: StartupAuthNotice? = null,
-    val homeRows: List<HomeRow> = emptyList(),
-    // Source filter tabs (streaming-service style tab bar on the home screen)
-    val homeSourceTabs: List<HomeSourceTab> = emptyList(),
-    val selectedHomeSourceAddonId: String? = null
-)
-
-@Immutable
-data class HomeSourceTab(
-    val addonId: String,
-    val name: String
+    val homeRows: List<HomeRow> = emptyList()
 )
 
 @Immutable
@@ -192,7 +183,6 @@ sealed class HomeEvent {
         val isNextUp: Boolean = false
     ) : HomeEvent()
     data object OnRetry : HomeEvent()
-    data class OnSourceTabSelected(val addonId: String?) : HomeEvent()
 }
 
 fun homeItemStatusKey(itemId: String, itemType: String): String {
