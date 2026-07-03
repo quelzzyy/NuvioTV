@@ -46,6 +46,9 @@ jobs:
           fi
           if git merge "upstream/$REF" --no-edit; then
             git push origin my-features
+            # Mirror upstream version tags so release notes can embed the
+            # official changelogs of merged releases.
+            git push origin --tags || true
             echo "Merged $BEHIND upstream commit(s) and pushed."
           else
             echo "::error::Merge conflict with upstream/$REF — sync manually (scripts/sync-upstream.ps1) and push."

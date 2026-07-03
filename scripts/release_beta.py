@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
 import subprocess
 import sys
+import urllib.request
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+UPSTREAM_GITHUB_REPO = "NuvioMedia/NuvioTV"
 BUILD_FILE = ROOT / "app" / "build.gradle.kts"
 RELEASE_OUTPUT_DIR = ROOT / "build" / "release"
 APK_DIR = ROOT / "app" / "build" / "outputs" / "apk" / "full" / "release"
@@ -218,6 +221,47 @@ def parse_extra_notes(notes_text: str | None, extra_lines: list[str]) -> list[st
     return parsed
 
 
+def _merged_tags(ref: str) -> set[str]:
+    result = subprocess.run(
+        ["git", "tag", "--merged", ref],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return set()
+    return {tag.strip() for tag in result.stdout.splitlines() if tag.strip()}
+
+
+def upstream_release_sections(previous_tag: str | None) -> list[str]:
+    """Changelogs of official upstream releases newly merged since the
+    previous fork release. Fork-only tags 404 on the upstream API and are
+    skipped automatically."""
+    if not previous_tag:
+        return []
+    new_tags = sorted(_merged_tags("HEAD") - _merged_tags(previous_tag))
+    sections: list[str] = []
+    for tag in new_tags:
+        url = f"https://api.github.com/repos/{UPSTREAM_GITHUB_REPO}/releases/tags/{tag}"
+        try:
+            request = urllib.request.Request(
+                url,
+                headers={
+                    "Accept": "application/vnd.github+json",
+                    "User-Agent": "release-script",
+                },
+            )
+            with urllib.request.urlopen(request, timeout=20) as response:
+                data = json.loads(response.read().decode())
+        except Exception:
+            continue
+        body = (data.get("body") or "").strip()
+        if body:
+            title = data.get("name") or tag
+            sections.append(f"### Included official update: {title}\n\n{body}")
+    return sections
+
+
 def build_release_notes(
     previous_tag: str | None,
     max_items: int,
@@ -242,6 +286,8 @@ def build_release_notes(
 
     lines = [DEFAULT_BETA_NOTICE, "", "### Improvements & Fixes"]
     lines.extend(f"- {item}" for item in bullet_items)
+    for section in upstream_release_sections(previous_tag):
+        lines.extend(["", section])
     if downloader_code:
         lines.extend(["", f"### Downloader Code - {downloader_code.strip()}"])
     return "\n".join(lines).strip() + "\n"

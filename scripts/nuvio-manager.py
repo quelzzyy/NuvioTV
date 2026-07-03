@@ -339,6 +339,7 @@ class ManagerApp:
             return
         self.log("Merged. Pushing to your fork…")
         push = run_git("push", "origin", BRANCH)
+        run_git("push", "origin", "--tags")  # mirror official version tags
         if push.returncode == 0:
             self.log("✔ Synced! Publish a release to get it on your TV.")
         else:
