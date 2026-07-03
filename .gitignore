@@ -44,6 +44,7 @@ scripts/*
 !scripts/sync-upstream.ps1
 !scripts/push-my-changes.ps1
 !scripts/run-emulator.ps1
+!scripts/nuvio-manager.py
 /supabase
 tv-samples
 HOME_UI_OPTIMIZATION_NOTES.local.md
