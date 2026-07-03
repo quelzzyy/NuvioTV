@@ -135,6 +135,12 @@ android {
         buildConfigField("String", "GITHUB_REPO", "\"${resolveProperty(devProperties, localProperties, "UPDATER_GITHUB_REPO", "NuvioTV")}\"")
     }
 
+    lint {
+        // Upstream translation updates occasionally ship strings that don't
+        // exist in the default locale; don't let that break release builds.
+        disable += "ExtraTranslation"
+    }
+
     flavorDimensions += "distribution"
     productFlavors {
         create("full") {
