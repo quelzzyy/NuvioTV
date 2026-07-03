@@ -413,7 +413,33 @@ def commit_tag_push(
         check=True,
         text=True,
     )
-    subprocess.run(["git", "push", "origin", f"HEAD:{branch_name}"], cwd=ROOT, check=True)
+    push_branch_and_tag(release_tag, release_title, branch_name)
+
+
+def push_branch_and_tag(release_tag: str, release_title: str, branch_name: str) -> None:
+    push = subprocess.run(
+        ["git", "push", "origin", f"HEAD:{branch_name}"], cwd=ROOT, text=True
+    )
+    if push.returncode != 0:
+        # The branch moved while we were building (auto-sync or a manual
+        # push). Rebase our release commit on top and re-point the tag.
+        print("Push rejected - branch moved during the build. Rebasing and retrying...")
+        subprocess.run(
+            ["git", "pull", "--rebase", "origin", branch_name],
+            cwd=ROOT,
+            check=True,
+            text=True,
+        )
+        subprocess.run(["git", "tag", "-d", release_tag], cwd=ROOT, check=False, text=True)
+        subprocess.run(
+            ["git", "tag", "-a", release_tag, "-m", f"Release {release_title}"],
+            cwd=ROOT,
+            check=True,
+            text=True,
+        )
+        subprocess.run(
+            ["git", "push", "origin", f"HEAD:{branch_name}"], cwd=ROOT, check=True, text=True
+        )
     subprocess.run(["git", "push", "origin", release_tag], cwd=ROOT, check=True)
 
 
@@ -428,8 +454,7 @@ def tag_push(
         check=True,
         text=True,
     )
-    subprocess.run(["git", "push", "origin", f"HEAD:{branch_name}"], cwd=ROOT, check=True)
-    subprocess.run(["git", "push", "origin", release_tag], cwd=ROOT, check=True)
+    push_branch_and_tag(release_tag, release_title, branch_name)
 
 
 def create_github_release(
