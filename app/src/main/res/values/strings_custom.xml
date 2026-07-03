@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Custom fork strings, kept in their own file so upstream syncs never
+     conflict with the official strings.xml. -->
+<resources>
+    <!-- Random episode (series detail hero) -->
+    <string name="hero_random_episode">Play random episode</string>
+
+    <!-- Sleep timer (player) -->
+    <string name="player_sleep_timer_title">Sleep Timer</string>
+    <string name="cd_sleep_timer">Sleep timer</string>
+    <string name="sleep_timer_minutes">%1$d minutes</string>
+    <string name="sleep_timer_remaining">Playback pauses in %1$s</string>
+    <string name="sleep_timer_cancel">Cancel timer</string>
+</resources>
